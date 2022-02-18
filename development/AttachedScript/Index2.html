@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+  </head>
+  <body>
+    <!-- https://developers.google.com/apps-script/guides/html/templates#index.html_3 -->
+    <? var presentation = SlidesApp.getActivePresentation(); ?>
+    <p>
+      <?= presentation.getName(); ?>
+    </p>
+    <ul>
+    <? 
+      for (var i = 0; i < imageObjects.length; i++) { 
+        var imgData = imageObjects[i];
+        var id = imgData.image.getObjectId();
+      ?>
+        <li>
+            <p><?= imgData.index + ": " + id ?></p>
+            <p>Data: <span id='p-<?= imgData.index ?>'><?= imgData.property ?></span></p>
+            <button onclick='setData(<?= id ?>, 0)'>Set to 0</button>
+            <button onclick='setData(<?= id ?>, <?= imgData.property - 1 ?>)'>--</button>
+            <button onclick='setData(<?= id ?>, <?= imgData.property + 1 ?>)'>++</button>
+        </li>
+    <? } ?>
+    </ul>
+
+    <p id="currentSelectionId">none</p>
+
+    <script>
+      function setData(id, data) {
+        console.log(id + "=>", data);
+        google.script.run.setData(id, data);
+      }
+
+      console.log("yo");
+      // google.script.run.doSomething();
+
+      function showSelected(selectionText) {
+        document.querySelector("#currentSelectionId").innerText = selectionText;
+      }
+
+      document.querySelector("body").addEventListener('mouseenter', function()
+      {
+        google.script.run.withSuccessHandler(showSelected).getSelected();
+        console.log("enter");
+      });
+    </script>
+  </body>
+</html>

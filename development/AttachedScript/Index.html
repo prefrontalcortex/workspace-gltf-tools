@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+    <script>
+
+        // from https://dev.to/nombrekeff/download-file-from-blob-21ho
+        function downloadBlob(blob, name = "file.txt") {
+          const blobUrl = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = blobUrl;
+          link.download = name;
+          document.body.appendChild(link);
+
+          // Dispatch click event on the link
+          // This is necessary as link.click() does not work on the latest firefox
+          link.dispatchEvent(
+            new MouseEvent("click", {
+              bubbles: true,
+              cancelable: true,
+              view: window
+            })
+          );
+
+          document.body.removeChild(link);
+        }
+
+        // from https://github.com/google/model-viewer/blob/master/packages/space-opera/src/components/utils/render_model_viewer.ts
+        let rafPasses = promise => new Promise(resolve => requestAnimationFrame(() => resolve()));
+
+        async function generatePosterBlob(size) {
+          var modelViewer = document.querySelector("#model-viewer");
+
+          let currentWidth = modelViewer.style.width;
+          let currentHeight = modelViewer.style.height;
+          let currentPosition = modelViewer.style.position;
+
+          if (size !== undefined) {
+            // set size temporarily
+            modelViewer.style.position = "absolute";
+            modelViewer.style.width = size + "px";
+            modelViewer.style.height = size + "px";
+          }
+
+          // set settings for first frame rendering
+          /*
+          var orbit = modelViewer.getAttribute("camera-orbit");
+          var target = modelViewer.getAttribute("camera-target");
+          modelViewer.autoplay = false;
+          modelViewer.currentTime = 0;
+          modelViewer.cameraOrbit = orbit;
+          modelViewer.cameraTarget = target;
+          modelViewer.jumpCameraToGoal();
+          */
+
+          await rafPasses();
+          await rafPasses();
+
+          var blob = await modelViewer.toBlob({
+            idealAspect: true,
+            mimeType: "image/png",
+            qualityArgument: 0.85
+          });
+          var date = new Date();
+          var timestamp =
+            date.getFullYear().toString() +
+            (date.getMonth() + 1).toString().padStart(2, "0") +
+            date
+              .getDay()
+              .toString()
+              .padStart(2, "0") +
+            "-" +
+            date
+              .getHours()
+              .toString()
+              .padStart(2, "0") +
+            date
+              .getMinutes()
+              .toString()
+              .padStart(2, "0") +
+            date
+              .getSeconds()
+              .toString()
+              .padStart(2, "0");
+          
+          if (size !== undefined) {
+            modelViewer.style.width = currentWidth;
+            modelViewer.style.height = currentHeight;
+            modelViewer.style.position = currentPosition;
+          }
+          
+          return {
+            blob:blob, 
+            filename: timestamp + "-poster.png"
+          };
+        }
+
+        async function downloadPoster(size) {
+          let poster = await generatePosterBlob(size);  
+          console.log(poster);
+          downloadBlob(poster.blob, poster.filename);
+        }
+
+
+    </script>    
+
+    <script>
+
+      function dragOut(e, id)
+      {
+        e.dataTransfer.effectAllowed = "all";
+
+        let fullUrl = `{{absoluteUrl}}/files/` + id;
+        let entry = `model/gltf-binary:myfile.glb:` + fullUrl;
+        e.dataTransfer.setData('DownloadURL', entry);
+
+        let dataList = e.dataTransfer.items;
+        dataList.add(fullUrl, "text/plain");
+        // dataList.add(new File(), "model/gltf-binary")
+        // e.preventDefault();
+        console.log("drag away", e, entry);
+      }
+      
+    </script>
+  </head>
+  <body>
+    <model-viewer id="model-viewer" alt="Neil Armstrong's Spacesuit from the Smithsonian Digitization Programs Office and National Air and Space Museum" src="https://modelviewer.dev/shared-assets/models/NeilArmstrong.glb" ar ar-modes="webxr scene-viewer quick-look" shadow-intensity="1" camera-controls style="height:400px;"></model-viewer>
+    <button draggable="true" ondragstart='dragOut(event);' onclick='downloadPoster(2048)'>💾<span class="tooltip">Download & Drag</span></button>
+    <input type="button" value="Close" onclick="google.script.host.close()" />
+  </body>
+</html>
