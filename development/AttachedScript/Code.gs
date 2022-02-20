@@ -1,8 +1,9 @@
 // Use this code for Google Docs, Slides, Forms, or Sheets.
 function onOpen() {
   SlidesApp.getUi()
-      .createMenu('Dialog')
-      .addItem('Open', 'openDialog')
+      .createMenu('🧑‍🚀 Model Viewer')
+      .addItem('Open Sidebar', 'openDialog')
+      .addItem('Open Overlay', 'openOverlay')
       .addToUi();
 
 /*
@@ -41,6 +42,18 @@ function getSelected() {
   return "none";
 }
 
+function openOverlay() {
+  var htmlTemplate = HtmlService.createTemplateFromFile('Index');
+  
+  var html = htmlTemplate
+    .evaluate()
+    .setWidth(800)
+    .setHeight(600);
+
+  SlidesApp.getUi()
+      .showModelessDialog(html, 'Create Model Images');
+}
+
 function openDialog() {
 
   var data = new Array();
@@ -63,7 +76,7 @@ function openDialog() {
     }
   }
 
-  var htmlTemplate = HtmlService.createTemplateFromFile('Index2');
+  var htmlTemplate = HtmlService.createTemplateFromFile('Index');
   htmlTemplate.imageObjects = data;
   // Logger.log(htmlTemplate.getCode());
 

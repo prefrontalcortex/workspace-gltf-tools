@@ -3,6 +3,26 @@
   <head>
     <base target="_top">
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  </head>
+  <body style="margin:0;">
+    <model-viewer 
+      id="model-viewer" 
+      alt="Model Viewer" 
+      src="https://modelviewer.dev/shared-assets/models/NeilArmstrong.glb" 
+      ar ar-modes="webxr scene-viewer quick-look" 
+      shadow-intensity="1" camera-controls style="height:400px;"
+      ondrop="dropHandler(event);" ondragover="dragOverHandler(event);"
+      style="width:100%; margin:0; padding:0; margin-bottom:10px;"
+    ></model-viewer>
+    <button draggable="true" ondragstart='dragOut(event);' onclick='downloadPoster(2048)'>💾<span class="tooltip">Download Image</span></button>
+    <!-- <input type="button" value="Close" onclick="google.script.host.close()" /> -->
+
+    <div id="drop_zone" onclick="document.getElementById('file-input').click();" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
+      <button>Upload Model</button>
+      <input onchange="fileSelected(this);" id="file-input" type="file" name="name" style="display: none;" />
+    </div>
+      <button onclick="openOverlayNow()">Open Overlay ↗</button>
+
 
     <script>
 
@@ -44,17 +64,6 @@
             modelViewer.style.height = size + "px";
           }
 
-          // set settings for first frame rendering
-          /*
-          var orbit = modelViewer.getAttribute("camera-orbit");
-          var target = modelViewer.getAttribute("camera-target");
-          modelViewer.autoplay = false;
-          modelViewer.currentTime = 0;
-          modelViewer.cameraOrbit = orbit;
-          modelViewer.cameraTarget = target;
-          modelViewer.jumpCameraToGoal();
-          */
-
           await rafPasses();
           await rafPasses();
 
@@ -67,23 +76,10 @@
           var timestamp =
             date.getFullYear().toString() +
             (date.getMonth() + 1).toString().padStart(2, "0") +
-            date
-              .getDay()
-              .toString()
-              .padStart(2, "0") +
-            "-" +
-            date
-              .getHours()
-              .toString()
-              .padStart(2, "0") +
-            date
-              .getMinutes()
-              .toString()
-              .padStart(2, "0") +
-            date
-              .getSeconds()
-              .toString()
-              .padStart(2, "0");
+            date.getDay().toString().padStart(2, "0") + "-" +
+            date.getHours().toString().padStart(2, "0") +
+            date.getMinutes().toString().padStart(2, "0") +
+            date.getSeconds().toString().padStart(2, "0");
           
           if (size !== undefined) {
             modelViewer.style.width = currentWidth;
@@ -103,18 +99,23 @@
           downloadBlob(poster.blob, poster.filename);
         }
 
-
     </script>    
 
     <script>
+      // file download functionality
 
-      function dragOut(e, id)
+      async function dragOut(e, id)
       {
         e.dataTransfer.effectAllowed = "all";
 
         let fullUrl = `{{absoluteUrl}}/files/` + id;
         let entry = `model/gltf-binary:myfile.glb:` + fullUrl;
         e.dataTransfer.setData('DownloadURL', entry);
+
+        // TODO figure out correct way to drag out an image from a model-viewer element, if possible
+        //let poster = await generatePosterBlob(1024);  
+        //entry = "image/png:image.png:" + URL.createObjectURL(poster.blob);
+        //e.dataTransfer.setData('DownloadURL', entry);
 
         let dataList = e.dataTransfer.items;
         dataList.add(fullUrl, "text/plain");
@@ -124,10 +125,216 @@
       }
       
     </script>
-  </head>
-  <body>
-    <model-viewer id="model-viewer" alt="Neil Armstrong's Spacesuit from the Smithsonian Digitization Programs Office and National Air and Space Museum" src="https://modelviewer.dev/shared-assets/models/NeilArmstrong.glb" ar ar-modes="webxr scene-viewer quick-look" shadow-intensity="1" camera-controls style="height:400px;"></model-viewer>
-    <button draggable="true" ondragstart='dragOut(event);' onclick='downloadPoster(2048)'>💾<span class="tooltip">Download & Drag</span></button>
-    <input type="button" value="Close" onclick="google.script.host.close()" />
+
+    <script>
+        // open as overlay instead - communicate back to Apps Script for that
+
+        function openOverlayNow() {
+          google.script.run.openOverlay();
+        }
+    </script>
+
+    <script>
+      // functionality for dropping a new file to be viewed
+
+      function upload(file) {
+        let mv = document.getElementById("model-viewer");
+        
+        // show in model-viewer
+        var reader = new FileReader();
+        reader.onload = function(event) {
+          mv.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function testAndUploadFile(file) {
+        let ext = file.name.split('.').pop();
+        console.log(file.name + ", " + file.size + ", " + ext);
+        if(ext == 'glb' || ext == 'gltf') { // && file.size < 5000000) {
+          upload(file);
+        }
+      }
+
+      function fileSelected(ev) {
+        console.log("File selected");
+        var file = ev.files[0];
+        testAndUploadFile(file); 
+      }
+      
+      function dropHandler(ev) {
+        console.log('File(s) dropped');
+
+        // Prevent default behavior (Prevent file from being opened)
+        ev.preventDefault();
+
+        if (ev.dataTransfer.items)
+        {
+          for (var i = 0; i < ev.dataTransfer.items.length; i++)
+          {
+            if (ev.dataTransfer.items[i].kind === 'file')
+            {
+              var file = ev.dataTransfer.items[i].getAsFile();
+              testAndUploadFile(file);
+            }
+          }
+        } else {
+          // Use DataTransfer interface to access the file(s)
+          for (var i = 0; i < ev.dataTransfer.files.length; i++) {
+            let file = ev.dataTransfer.files[i];
+            testAndUploadFile(file);
+          }
+        }
+      }
+
+      function dragOverHandler(ev) {
+        // Prevent default behavior (Prevent file from being opened)
+        ev.preventDefault();
+      }
+    </script>
+
+    <script>
+      // from https://modelviewer.dev/examples/annotations/index.html#cameraViews
+
+      const modelViewer = document.querySelector("#model-viewer");
+      const tapDistance = 2;
+      let panning = false;
+      let panX, panY;
+      let startX, startY;
+      let lastX, lastY;
+      let metersPerPixel;
+
+      const startPan = () => {
+        const orbit = modelViewer.getCameraOrbit();
+        const {theta, phi, radius} = orbit;
+        const psi = theta - modelViewer.turntableRotation;
+        metersPerPixel = 0.75 * radius / modelViewer.getBoundingClientRect().height;
+        panX = [-Math.cos(psi), 0, Math.sin(psi)];
+        panY = [
+          -Math.cos(phi) * Math.sin(psi),
+          Math.sin(phi),
+          -Math.cos(phi) * Math.cos(psi)
+        ];
+        modelViewer.interactionPrompt = 'none';
+      };
+
+      const stopPan = (event) => {
+        panning = false;
+      }
+
+      const movePan = (thisX, thisY) => {
+        const dx = (thisX - lastX) * metersPerPixel;
+        const dy = (thisY - lastY) * metersPerPixel;
+        lastX = thisX;
+        lastY = thisY;
+
+        const target = modelViewer.getCameraTarget();
+        target.x += dx * panX[0] + dy * panY[0];
+        target.y += dx * panX[1] + dy * panY[1];
+        target.z += dx * panX[2] + dy * panY[2];
+        modelViewer.cameraTarget = `${target.x}m ${target.y}m ${target.z}m`;
+
+        // This pauses turntable rotation
+        modelViewer.dispatchEvent(new CustomEvent(
+              'camera-change', {detail: {source: 'user-interaction'}}));
+      };
+
+      const recenter = (pointer) => {
+        panning = false;
+        if (Math.abs(pointer.clientX - startX) > tapDistance ||
+            Math.abs(pointer.clientY - startY) > tapDistance)
+          return;
+        const hit = modelViewer.positionAndNormalFromPoint(pointer.clientX, pointer.clientY);
+        if(hit != null) {
+          modelViewer.cameraTarget = hit.position.toString();
+        }
+        else {
+          modelViewer.cameraTarget = 'auto auto auto';
+          modelViewer.cameraOrbit = 'auto auto auto';
+        }
+      };
+
+      modelViewer.addEventListener('mousedown', (event) => {
+        startX = event.clientX;
+        startY = event.clientY;
+        panning = event.button === 2 || event.ctrlKey || event.metaKey ||
+            event.shiftKey;
+        if (!panning)
+          return;
+
+        lastX = startX;
+        lastY = startY;
+        startPan();
+        event.stopPropagation();
+      }, true);
+
+      modelViewer.addEventListener('touchstart', (event) => {
+        const {targetTouches, touches} = event;
+        startX = targetTouches[0].clientX;
+        startY = targetTouches[0].clientY;
+        panning = targetTouches.length === 2 && targetTouches.length === touches.length;
+        if (!panning)
+          return;
+
+        lastX = 0.5 * (targetTouches[0].clientX + targetTouches[1].clientX);
+        lastY = 0.5 * (targetTouches[0].clientY + targetTouches[1].clientY);
+        startPan();
+      }, true);
+
+      self.addEventListener('mousemove', (event) => {
+        if (!panning)
+          return;
+
+        movePan(event.clientX, event.clientY);
+        event.stopPropagation();
+      }, true);
+
+      modelViewer.addEventListener('touchmove', (event) => {
+        if (!panning || event.targetTouches.length !== 2)
+          return;
+
+        const {targetTouches} = event;
+        const thisX = 0.5 * (targetTouches[0].clientX + targetTouches[1].clientX);
+        const thisY = 0.5 * (targetTouches[0].clientY + targetTouches[1].clientY);
+        movePan(thisX, thisY);
+      }, true);
+
+      let lastMousedown = {time: new Date().getTime()};
+      let lastTouchstart = {time: new Date().getTime()};
+      function doubletap(timer) {
+        var now = new Date().getTime();
+        var timesince = now - timer.time;
+        timer.time = new Date().getTime();
+        if((timesince < 400) && (timesince > 0))
+          return true;
+        else
+          return false;
+      }
+
+      self.addEventListener('mouseup', (event) => {
+        stopPan(event);
+      }, true);
+
+      modelViewer.addEventListener('oncontextmenu', (event) => {
+          console.log("context!");
+          event.preventDefault();
+          return false;
+      });
+
+      self.addEventListener('mousedown', (event) => {
+        if(doubletap(lastMousedown))
+            recenter(event);
+      }, true);
+      
+      modelViewer.addEventListener('touchstart', (event) => {
+        if (doubletap(lastTouchstart) && event.targetTouches.length === 0) {
+          recenter(event.changedTouches[0]);
+
+          if (event.cancelable) {
+            event.preventDefault();
+          }
+        }
+      }, true);
+    </script>
   </body>
 </html>

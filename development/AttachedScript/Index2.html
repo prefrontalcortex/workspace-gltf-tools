@@ -18,9 +18,9 @@
         <li>
             <p><?= imgData.index + ": " + id ?></p>
             <p>Data: <span id='p-<?= imgData.index ?>'><?= imgData.property ?></span></p>
-            <button onclick='setData(<?= id ?>, 0)'>Set to 0</button>
-            <button onclick='setData(<?= id ?>, <?= imgData.property - 1 ?>)'>--</button>
-            <button onclick='setData(<?= id ?>, <?= imgData.property + 1 ?>)'>++</button>
+            <button onclick='setData(<?= id ?>, parseFloat(0.0))'>Set to 0</button>
+            <button onclick='setData(<?= id ?>, <?= parseFloat(imgData.property) - 1.0 ?>)'>--</button>
+            <button onclick='setData(<?= id ?>, <?= parseFloat(imgData.property) + 1.0 ?>)'>++</button>
         </li>
     <? } ?>
     </ul>

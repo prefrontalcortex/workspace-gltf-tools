@@ -43,3 +43,91 @@ https://developers.google.com/apps-script/guides/html/best-practices#page.html
 Cards quickstart:  
 (only images + markdown, no HTML/JS, can open overlays from there)  
 https://developers.google.com/apps-script/add-ons/cats-quickstart
+
+To open GLB files in Drive with a custom app, one needs to make an external app right now (requires V3 Drive SDK which doesn't seem to be supported on Apps Script for whatever reason):  
+1. https://developers.google.com/drive/api/v3/enable-sdk
+2. Register App here: https://console.developers.google.com/apis/dashboard
+3. "Open with" context menu integration: https://developers.google.com/drive/api/v3/integrate-open#node.js
+
+Scopes  
+https://developers.google.com/drive/api/v3/reference/files/get#auth  
+  
+Probably only needed:  
+https://www.googleapis.com/auth/drive.readonly  
+https://www.googleapis.com/auth/drive.metadata.readonly  
+
+Binary blob download:
+https://github.com/google/google-api-javascript-client/issues/704
+
+
+Scopes  
+https://developers.google.com/drive/api/v3/reference/files/get#auth
+
+Probably only needed:  
+https://www.googleapis.com/auth/drive.readonly
+https://www.googleapis.com/auth/drive.metadata.readonly
+
+Register App here  
+https://console.developers.google.com/apis/dashboard
+
+"Open with" context menu integration  
+https://developers.google.com/drive/api/v3/integrate-open#node.js
+
+Store application-specific data:  
+https://developers.google.com/drive/api/v3/appdata  
+Could probably be used to store snapshots/views, annotation data, ... per file  
+(custom file properties are too small for images: https://developers.google.com/drive/api/v3/properties)  
+
+Update Thumbnails for files:  
+see https://developers.google.com/drive/api/v3/reference/file, only need to update metadata.  
+```
+gapi.client.drive.files.update({
+    fileId:ids[0],
+    contentHints: {
+        thumbnail: {
+            image: "", <-- URL-safe base64 encoding. Basically base64 but "+" to "-", "/" to "_", remove "=" 
+            "mimeType: "image/jpeg"
+        }
+    }
+});
+
+File Picker in Apps Script or elsewhere:  
+https://developers.google.com/apps-script/guides/dialogs#file-open_dialogs
+
+Typical state passed to a viewer application:  
+```
+{
+    action: "open",
+    ids: ["15pvmkALy9Ud23zf8SMnpTgOqJYNYOCCU"],
+    resourceKeys: {},
+    userId: "108834913000475811169",
+}
+```
+
+Typical selectItem event data when selecting an item in Drive:  
+https://developers.google.com/apps-script/add-ons/drive/building-drive-interfaces
+```
+{
+    "commonEventObject": { ... },
+    "drive": {
+    "activeCursorItem":{
+        "addonHasFileScopePermission": true,
+        "id":"0B_sX1fXRRU6Ac3RhcnRlcl9maWxl",
+        "iconUrl": "https://drive-thirdparty.googleusercontent.com...",
+        "mimeType":"application/pdf",
+        "title":"How to get started with Drive"
+    },
+    "selectedItems": [
+        {
+        "addonHasFileScopePermission": true,
+        "id":"0B_sX1fXRRU6Ac3RhcnRlcl9maWxl",
+        "iconUrl":"https://drive-thirdparty.googleusercontent.com...",
+        "mimeType":"application/pdf",
+        "title":"How to get started with Drive"
+        },
+        ...
+    ]
+    },
+    ...
+}
+```
