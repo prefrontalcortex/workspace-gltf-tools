@@ -12,7 +12,24 @@ Basic flow to create a bound script (has more access rights, can be turned into 
 - you'll have a sidebar open up on the right
 - it lists all images in the Presentation plus custom data attached to them
 - you can manipulate data by pressing buttons (but will only see the result after doing <kbd>Dialog > Open</kbd> again right now)
-- in `Code.gs:66`, switch to "Index" instead of "Index2" to have a simple astronaut model-viewer but not connected to any custom data yet.
+- in `Code.gs:66`, switch between "Index" and "PropertiesTest" to check out various experiments.
+
+## Model Viewer
+
+A basic viewer is live at https://gltf-workspace-viewer.glitch.me/  
+It can be registered as "Open with" app on the `/open` URL.  
+Edit/remix here: https://glitch.com/edit/#!/gltf-workspace-viewer  
+
+## Deployment
+
+- AppsScript needs to be connected to GCP project (Google Cloud Platform)
+- Test deployments from standalone AppsScripts can only be made from the old script editor, not yet from the new editor. Switch to the old one
+- create a project here: https://console.cloud.google.com/home/dashboard
+- configure credentials and OAuth consent screen
+- add the "Marketplace SDK" and "Drive API", "Picker API" (for future tests)
+- in "Drive API", you can configure Drive UI (e.g. integration as viewer for specific file types into Drive)
+- in "Marketsplace SDK", set up all the various links to Script IDs etc.
+- you can have multiple, e.g. same App has Workspace, Drive, Slides, Web App integration
 
 ## Links / Ideas
 
